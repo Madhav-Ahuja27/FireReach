@@ -77,7 +77,8 @@ export default function DashboardPage() {
     setRuntimeState('running')
 
     const token = localStorage.getItem('fr_token')
-    const resp = await fetch('/run-agent?stream=true', {
+    const backendUrl = import.meta.env.VITE_API_URL || ''
+    const resp = await fetch(backendUrl + '/run-agent?stream=true', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -156,7 +157,7 @@ export default function DashboardPage() {
     setSelectLoading(true)
     setError('')
     try {
-      const { data } = await api.post('/select-company', { icp, company })
+      const { data } = await api.post('/api/select-company', { icp, company })
       setSelectedCompany(data.company)
       setContacts(data.contacts || [])
       setOutreach(data.outreach || null)

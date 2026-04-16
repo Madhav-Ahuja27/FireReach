@@ -17,7 +17,7 @@ export default function EmailDraft({ outreach, toEmail, historyId, onSent }) {
     setSending(true)
     setError('')
     try {
-      await api.post('/send-email', { to_email: to, subject, body, history_id: historyId })
+      await api.post('/api/send-email', { to_email: to, subject, body, history_id: historyId })
       setSent(true)
       onSent?.()
     } catch (err) {

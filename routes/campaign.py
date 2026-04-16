@@ -13,7 +13,7 @@ from models import Credits, History, User
 from schemas import CampaignRequest, SelectCompanyRequest, SendEmailRequest
 from services.email_service import send_email
 
-router = APIRouter(prefix="", tags=["campaign"])
+router = APIRouter(prefix="/api", tags=["campaign"])
 
 CREDIT_COST = {"manual": 5, "auto": 10}
 
