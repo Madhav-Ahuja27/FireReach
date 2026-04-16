@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import logging
 
 from fastapi import APIRouter, Depends, HTTPException
 from jose import jwt
@@ -10,6 +11,8 @@ from database import get_db
 from dependencies import get_current_user
 from models import Credits, User
 from schemas import TokenResponse, UserCreate, UserLogin, UserResponse, UserUpdate
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 pwd = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -36,11 +39,13 @@ def signup(data: UserCreate, db: Session = Depends(get_db)):
     )
     db.add(user)
     try:
-        db.flush()
+        db.commit()
+        db.refresh(user)
         db.add(Credits(user_id=user.id, balance=20))
         db.commit()
         db.refresh(user)
     except Exception as exc:
+        logger.error("Signup failed", exc_info=exc)
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Signup failed: {exc}")
 
