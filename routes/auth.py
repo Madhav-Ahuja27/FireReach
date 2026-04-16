@@ -30,6 +30,17 @@ def _create_token(user_id: int) -> str:
 @router.post("/signup", response_model=TokenResponse)
 def signup(data: UserCreate, db: Session = Depends(get_db)):
     try:
+        # Validate input lengths
+        if len(data.email) > 255:
+            raise HTTPException(status_code=400, detail="Email too long (max 255 characters)")
+        if len(data.name) > 255:
+            raise HTTPException(status_code=400, detail="Name too long (max 255 characters)")
+        
+        password_bytes = data.password.encode('utf-8')
+        if len(password_bytes) > 72:
+            logger.warning(f"Password too long: {len(password_bytes)} bytes. Password repr: {repr(data.password[:100])}")
+            raise HTTPException(status_code=400, detail=f"Password too long ({len(password_bytes)} bytes, max 72 bytes)")
+
         if db.query(User).filter(User.email == data.email).first():
             raise HTTPException(status_code=400, detail="Email already registered")
 
