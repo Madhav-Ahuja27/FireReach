@@ -15,7 +15,7 @@ from schemas import TokenResponse, UserCreate, UserLogin, UserResponse, UserUpda
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
-pwd = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd = CryptContext(schemes=["argon2"], deprecated="auto")
 
 
 def _create_token(user_id: int) -> str:
@@ -31,19 +31,15 @@ def _create_token(user_id: int) -> str:
 def signup(data: UserCreate, db: Session = Depends(get_db)):
     try:
         # Log what we received
-        logger.info(f"Signup attempt: email={data.email}, name={data.name}, password_len={len(data.password)}, password_bytes={len(data.password.encode('utf-8'))}")
+        logger.info(f"Signup attempt: email={data.email}, name={data.name}")
         
         # Validate input lengths
         if len(data.email) > 255:
             raise HTTPException(status_code=400, detail="Email too long (max 255 characters)")
         if len(data.name) > 255:
             raise HTTPException(status_code=400, detail="Name too long (max 255 characters)")
-        
-        password_bytes = data.password.encode('utf-8')
-        logger.info(f"Password bytes: {len(password_bytes)}, repr: {repr(data.password)}")
-        if len(password_bytes) > 72:
-            logger.warning(f"Password too long: {len(password_bytes)} bytes")
-            raise HTTPException(status_code=400, detail=f"Password too long ({len(password_bytes)} bytes, max 72 bytes)")
+        if len(data.password) < 6:
+            raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
 
         if db.query(User).filter(User.email == data.email).first():
             raise HTTPException(status_code=400, detail="Email already registered")
