@@ -29,27 +29,30 @@ def _create_token(user_id: int) -> str:
 
 @router.post("/signup", response_model=TokenResponse)
 def signup(data: UserCreate, db: Session = Depends(get_db)):
-    if db.query(User).filter(User.email == data.email).first():
-        raise HTTPException(status_code=400, detail="Email already registered")
-
-    user = User(
-        email=data.email,
-        name=data.name,
-        password_hash=pwd.hash(data.password),
-    )
-    db.add(user)
     try:
+        if db.query(User).filter(User.email == data.email).first():
+            raise HTTPException(status_code=400, detail="Email already registered")
+
+        user = User(
+            email=data.email,
+            name=data.name,
+            password_hash=pwd.hash(data.password),
+        )
+        db.add(user)
         db.commit()
         db.refresh(user)
+
         db.add(Credits(user_id=user.id, balance=20))
         db.commit()
         db.refresh(user)
+
+        return {"access_token": _create_token(user.id), "user": user}
+    except HTTPException:
+        raise
     except Exception as exc:
         logger.error("Signup failed", exc_info=exc)
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Signup failed: {exc}")
-
-    return {"access_token": _create_token(user.id), "user": user}
 
 
 @router.post("/login", response_model=TokenResponse)
