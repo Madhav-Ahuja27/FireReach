@@ -78,7 +78,7 @@ export default function DashboardPage() {
 
     const token = localStorage.getItem('fr_token')
     const backendUrl = import.meta.env.VITE_API_URL || ''
-    const resp = await fetch(backendUrl + '/run-agent?stream=true', {
+    const resp = await fetch(backendUrl + '/api/run-agent?stream=true', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
