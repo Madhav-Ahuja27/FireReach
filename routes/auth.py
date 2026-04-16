@@ -35,10 +35,14 @@ def signup(data: UserCreate, db: Session = Depends(get_db)):
         password_hash=pwd.hash(data.password),
     )
     db.add(user)
-    db.flush()
-    db.add(Credits(user_id=user.id, balance=20))
-    db.commit()
-    db.refresh(user)
+    try:
+        db.flush()
+        db.add(Credits(user_id=user.id, balance=20))
+        db.commit()
+        db.refresh(user)
+    except Exception as exc:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Signup failed: {exc}")
 
     return {"access_token": _create_token(user.id), "user": user}
 
