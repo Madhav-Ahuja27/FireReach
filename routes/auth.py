@@ -30,6 +30,9 @@ def _create_token(user_id: int) -> str:
 @router.post("/signup", response_model=TokenResponse)
 def signup(data: UserCreate, db: Session = Depends(get_db)):
     try:
+        # Log what we received
+        logger.info(f"Signup attempt: email={data.email}, name={data.name}, password_len={len(data.password)}, password_bytes={len(data.password.encode('utf-8'))}")
+        
         # Validate input lengths
         if len(data.email) > 255:
             raise HTTPException(status_code=400, detail="Email too long (max 255 characters)")
@@ -37,8 +40,9 @@ def signup(data: UserCreate, db: Session = Depends(get_db)):
             raise HTTPException(status_code=400, detail="Name too long (max 255 characters)")
         
         password_bytes = data.password.encode('utf-8')
+        logger.info(f"Password bytes: {len(password_bytes)}, repr: {repr(data.password)}")
         if len(password_bytes) > 72:
-            logger.warning(f"Password too long: {len(password_bytes)} bytes. Password repr: {repr(data.password[:100])}")
+            logger.warning(f"Password too long: {len(password_bytes)} bytes")
             raise HTTPException(status_code=400, detail=f"Password too long ({len(password_bytes)} bytes, max 72 bytes)")
 
         if db.query(User).filter(User.email == data.email).first():
@@ -61,7 +65,7 @@ def signup(data: UserCreate, db: Session = Depends(get_db)):
     except HTTPException:
         raise
     except Exception as exc:
-        logger.error("Signup failed", exc_info=exc)
+        logger.error(f"Signup failed: {type(exc).__name__}: {exc}", exc_info=exc)
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Signup failed: {exc}")
 
